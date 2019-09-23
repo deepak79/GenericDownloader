@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Generic Downloader</string>
+    <string name="nointernet">No internet!</string>
+</resources>
