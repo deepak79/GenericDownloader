@@ -1,6 +1,8 @@
 package com.mv.genericdownloader.ui.main.fragment.pinwall.adapter
 
 import android.content.Context
+import android.graphics.drawable.BitmapDrawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,15 +10,20 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.mv.genericdownloader.R
 import com.mv.genericdownloader.model.response.DataResponse
+import com.mv.genericdownloaderlib.core.GenericDownloadManager
+import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
+import com.mv.genericdownloaderlib.model.BaseResource
+import com.mv.genericdownloaderlib.model.ImageResource
+import com.mv.genericdownloaderlib.model.ResourceTypes
 
-class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse.User.ProfileImage>) :
+class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
     RecyclerView.Adapter<MenuImagesAdapter.MenuImageVH>() {
     var selectedPosition = 0
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuImageVH {
         val view = LayoutInflater.from(mContext).inflate(R.layout.row_images, parent, false)
         return MenuImageVH(view)
     }
-
 
     override fun getItemCount(): Int {
         if (mList.isEmpty()) {
@@ -31,11 +38,11 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse.User
 
     inner class MenuImageVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        var img_menu: ImageView
+        var img: ImageView
 
         init {
             itemView.setOnClickListener { v -> setOnItemClick(adapterPosition) }
-            img_menu = itemView.findViewById(R.id.img_menu)
+            img = itemView.findViewById(R.id.img)
         }
 
         private fun setOnItemClick(adapterPosition: Int) {
@@ -44,9 +51,17 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse.User
         }
 
         fun bind(position: Int) {
-//            Glide.with(itemView.context).load(mList[position].image)
-//                .placeholder(R.drawable.img_placeholder)
-//                .into(img_menu)
+            GenericDownloadManager(
+                mList[position].user.profileImage.medium,
+                ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
+                    override fun onSuccess(data: BaseResource) {
+                        img.setImageBitmap((data as ImageResource).getBitmap())
+                    }
+
+                    override fun onFailure(error: String?) {
+                        Log.e("@@@@", "Failure $error")
+                    }
+                })
         }
     }
 }

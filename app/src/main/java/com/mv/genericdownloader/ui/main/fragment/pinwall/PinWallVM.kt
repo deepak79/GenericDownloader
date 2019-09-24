@@ -9,7 +9,7 @@ import com.mv.genericdownloader.utils.rx.SchedulerProvider
 
 class PinWallVM(dataManager: DataManager, schedulerProvider: SchedulerProvider) :
     BaseViewModel<PinWallNavigator>(dataManager, schedulerProvider) {
-    private var mDataResponse: MutableLiveData<DataResponse> =
+    private var mDataResponse: MutableLiveData<List<DataResponse>> =
         MutableLiveData()
 
     private fun handleError(error: Throwable?) {
@@ -17,7 +17,7 @@ class PinWallVM(dataManager: DataManager, schedulerProvider: SchedulerProvider) 
         getNavigator().onHandleError(error?.message!!)
     }
 
-    fun getDataResponseLiveData(): MutableLiveData<DataResponse> {
+    fun getDataResponseLiveData(): MutableLiveData<List<DataResponse>> {
         return mDataResponse
     }
 

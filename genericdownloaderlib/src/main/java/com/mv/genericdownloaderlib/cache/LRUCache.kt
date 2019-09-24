@@ -39,6 +39,6 @@ class LRUCache(private val minimalSize: Int = DEFAULT_SIZE) {
     }
 
     companion object {
-        private const val DEFAULT_SIZE = 10
+        private const val DEFAULT_SIZE = 30
     }
 }

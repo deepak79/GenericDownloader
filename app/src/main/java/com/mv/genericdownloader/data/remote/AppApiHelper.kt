@@ -14,11 +14,11 @@ class AppApiHelper @Inject
 constructor(
 ) : ApiHelper {
 
-    override fun getData(): Single<DataResponse> {
-        return Rx2AndroidNetworking.get(ApiEndPoint.ENDPOINT_GET_DATA)
+    override fun getData(): Single<List<DataResponse>> {
+        return Rx2AndroidNetworking.get(ApiEndPoint.ENDPOINT_GET_DATA_)
             .setPriority(Priority.HIGH)
             .build()
-            .getObjectSingle(DataResponse::class.java)
+            .getObjectListSingle(DataResponse::class.java)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
     }

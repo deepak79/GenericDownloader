@@ -12,7 +12,7 @@ constructor(
     private val mApiHelper: ApiHelper
 ) : DataManager {
 
-    override fun getData(): Single<DataResponse> {
+    override fun getData(): Single<List<DataResponse>> {
         return mApiHelper.getData()
     }
 }
