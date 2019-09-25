@@ -2,11 +2,10 @@ package com.mv.genericdownloaderlib.model
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import java.io.InputStream
 
-open class ImageResource(private val inputStream: InputStream) : BaseResource() {
-
+open class ImageResource(private val byteArray: ByteArray) : BaseResource() {
+    @Throws(Exception::class)
     fun getBitmap(): Bitmap {
-        return BitmapFactory.decodeStream(inputStream)
+        return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
 }

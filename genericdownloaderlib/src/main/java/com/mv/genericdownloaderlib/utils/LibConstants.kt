@@ -1,4 +1,4 @@
-package com.mv.genericdownloaderlib.model
+package com.mv.genericdownloaderlib.utils
 
 class LibConstants {
     companion object {

@@ -1,18 +1,20 @@
 package com.mv.genericdownloaderlib.core
 
 import com.mv.genericdownloaderlib.cache.LRUCache
+import com.mv.genericdownloaderlib.enums.ResourceTypes
 import com.mv.genericdownloaderlib.interfaces.IHandleRequestCallBack
 import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
 import com.mv.genericdownloaderlib.model.*
-import com.mv.genericdownloaderlib.model.LibConstants.Companion.DEFAULT_CACHE_SIZE
+import com.mv.genericdownloaderlib.utils.LibConstants.Companion.DEFAULT_CACHE_SIZE
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.math.BigInteger
 import java.security.MessageDigest
@@ -24,10 +26,24 @@ class GenericDownloadManager(
     private val mIResourceRequestCallBack: IResourceRequestCallBack<BaseResource>
 ) : IHandleRequestCallBack {
     private lateinit var disposable: Disposable
-    private val client = OkHttpClient()
-
     companion object {
+        private val client = OkHttpClient()
         private val mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
+        @Throws(IOException::class)
+        fun readAllBytes(ins: InputStream): ByteArray {
+            val bufLen = 4 * 0x400 // 4KB
+            val buf = ByteArray(bufLen)
+            var readLen: Int = 0
+
+            ByteArrayOutputStream().use { o ->
+                ins.use { i ->
+                    while (i.read(buf, 0, bufLen).also { readLen = it } != -1)
+                        o.write(buf, 0, readLen)
+                }
+
+                return o.toByteArray()
+            }
+        }
 
         @Throws(Exception::class)
         fun getMD5EncryptedString(encTarget: String): String {
@@ -45,33 +61,31 @@ class GenericDownloadManager(
         getData()
     }
 
-    private fun getObserver(): DisposableObserver<InputStream> {
-        return object : DisposableObserver<InputStream>() {
+    private fun getObserver(): DisposableObserver<ByteArray> {
+        return object : DisposableObserver<ByteArray>() {
             override fun onComplete() {
             }
 
-            override fun onNext(inpStream: InputStream) {
-                if (inpStream != null) {
-                    if (!mLruCache.contains(getMD5EncryptedString(mResourceURL))) {
-                        mLruCache.set(getMD5EncryptedString(mResourceURL), inpStream)
-                    }
-                    when (mResourceTypes) {
-                        ResourceTypes.IMAGE -> mIResourceRequestCallBack.onSuccess(
-                            ImageResource(
-                                inpStream
-                            )
+            override fun onNext(inpStream: ByteArray) {
+                if (!mLruCache.contains(getMD5EncryptedString(mResourceURL))) {
+                    mLruCache.set(getMD5EncryptedString(mResourceURL), inpStream)
+                }
+                when (mResourceTypes) {
+                    ResourceTypes.IMAGE -> mIResourceRequestCallBack.onSuccess(
+                        ImageResource(
+                            inpStream
                         )
-                        ResourceTypes.JSON -> mIResourceRequestCallBack.onSuccess(
-                            JSONResource(
-                                inpStream
-                            )
+                    )
+                    ResourceTypes.JSON -> mIResourceRequestCallBack.onSuccess(
+                        JSONResource(
+                            inpStream
                         )
-                        ResourceTypes.STRING -> mIResourceRequestCallBack.onSuccess(
-                            StringResource(
-                                inpStream
-                            )
+                    )
+                    ResourceTypes.STRING -> mIResourceRequestCallBack.onSuccess(
+                        StringResource(
+                            inpStream
                         )
-                    }
+                    )
                 }
             }
 
@@ -83,38 +97,39 @@ class GenericDownloadManager(
 
     private fun getData() {
         val cache = fetchCachedData(mResourceURL)
-        if (cache == null) {
-            Observable.create(ObservableOnSubscribe<InputStream?> { emitter ->
-                try {
-                    emitter.onNext(fetchRemoteData(mResourceURL))
-                    emitter.onComplete()
-                } catch (e: java.lang.Exception) {
-                    emitter.onError(e)
-                }
-            }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(getObserver())
-        } else {
-            getObserver().onNext(cache)
-            getObserver().onComplete()
+        val remote = fetchRemoteData(mResourceURL)
+        disposable = Observable.concat(cache, remote)
+            .firstElement()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .toObservable()
+            .subscribeWith(getObserver())
+    }
+
+    private fun fetchCachedData(mURL: String): Observable<ByteArray> {
+        return Observable.create { emitter ->
+            if (mLruCache.contains(getMD5EncryptedString(mURL))) {
+                emitter.onNext(mLruCache.get(getMD5EncryptedString(mURL)) as ByteArray)
+            }
+            emitter.onComplete()
         }
     }
 
-
-    private fun fetchCachedData(mURL: String): InputStream? {
-        if (mLruCache.contains(getMD5EncryptedString(mURL))) {
-            return mLruCache.get(getMD5EncryptedString(mURL)) as InputStream
-        } else {
-            return null
+    private fun fetchRemoteData(mURL: String): Observable<ByteArray> {
+        return Observable.create { emitter ->
+            val request = Request.Builder()
+                .url(mURL)
+                .build()
+            val response = client.newCall(request).execute()
+            try {
+                emitter.onNext(readAllBytes(response.body?.byteStream()!!))
+            } catch (e: java.lang.Exception) {
+                emitter.onError(e)
+            } finally {
+                response.body?.close()
+                emitter.onComplete()
+            }
         }
-    }
-
-    private fun fetchRemoteData(mURL: String): InputStream {
-        val request = Request.Builder()
-            .url(mURL)
-            .build()
-        val response = client.newCall(request).execute()
-        return response.body?.byteStream()!!
     }
 
     override fun onCancel() {

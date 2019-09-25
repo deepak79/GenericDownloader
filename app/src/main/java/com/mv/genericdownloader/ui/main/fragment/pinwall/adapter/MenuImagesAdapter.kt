@@ -1,7 +1,6 @@
 package com.mv.genericdownloader.ui.main.fragment.pinwall.adapter
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +13,8 @@ import com.mv.genericdownloaderlib.core.GenericDownloadManager
 import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
 import com.mv.genericdownloaderlib.model.BaseResource
 import com.mv.genericdownloaderlib.model.ImageResource
-import com.mv.genericdownloaderlib.model.ResourceTypes
+import com.mv.genericdownloaderlib.enums.ResourceTypes
+
 
 class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
     RecyclerView.Adapter<MenuImagesAdapter.MenuImageVH>() {
@@ -37,11 +37,12 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
     }
 
     inner class MenuImageVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
         var img: ImageView
 
         init {
-            itemView.setOnClickListener { v -> setOnItemClick(adapterPosition) }
+            itemView.setOnClickListener {
+                setOnItemClick(adapterPosition)
+            }
             img = itemView.findViewById(R.id.img)
         }
 
@@ -52,7 +53,7 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
 
         fun bind(position: Int) {
             GenericDownloadManager(
-                mList[position].user.profileImage.medium,
+                mList[position].user.profileImage.large,
                 ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
                     override fun onSuccess(data: BaseResource) {
                         img.setImageBitmap((data as ImageResource).getBitmap())
