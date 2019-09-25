@@ -10,19 +10,22 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mv.genericdownloader.R
 import com.mv.genericdownloader.model.response.DataResponse
 import com.mv.genericdownloaderlib.core.GenericDownloadManager
+import com.mv.genericdownloaderlib.enums.ResourceTypes
 import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
 import com.mv.genericdownloaderlib.model.BaseResource
 import com.mv.genericdownloaderlib.model.ImageResource
-import com.mv.genericdownloaderlib.enums.ResourceTypes
 
 
 class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
-    RecyclerView.Adapter<MenuImagesAdapter.MenuImageVH>() {
+    RecyclerView.Adapter<BaseViewHolder>() {
     var selectedPosition = 0
-
+    private val VIEW_TYPE_LOADING = 0
+    private val VIEW_TYPE_NORMAL = 1
+    private val isLoaderVisible = false
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuImageVH {
         val view = LayoutInflater.from(mContext).inflate(R.layout.row_images, parent, false)
         return MenuImageVH(view)
+
     }
 
     override fun getItemCount(): Int {
@@ -32,12 +35,16 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
         return mList.size
     }
 
-    override fun onBindViewHolder(holder: MenuImageVH, position: Int) {
-        holder.bind(position)
+    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
+        //https://androidwave.com/pagination-in-recyclerview/
+        holder.onBind(position)
     }
 
-    inner class MenuImageVH(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class MenuImageVH(itemView: View) : BaseViewHolder(itemView) {
         var img: ImageView
+        override fun clear() {
+
+        }
 
         init {
             itemView.setOnClickListener {
@@ -49,6 +56,31 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
         private fun setOnItemClick(adapterPosition: Int) {
             selectedPosition = adapterPosition
             notifyDataSetChanged()
+        }
+
+        fun bind(position: Int) {
+            GenericDownloadManager(
+                mList[position].user.profileImage.large,
+                ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
+                    override fun onSuccess(data: BaseResource) {
+                        img.setImageBitmap((data as ImageResource).getBitmap())
+                    }
+
+                    override fun onFailure(error: String?) {
+                        Log.e("@@@@", "Failure $error")
+                    }
+                })
+        }
+    }
+
+    inner class ProgressVH(itemView: View) : BaseViewHolder(itemView) {
+        var img: ImageView
+        override fun clear() {
+
+        }
+
+        init {
+            img = itemView.findViewById(R.id.img)
         }
 
         fun bind(position: Int) {

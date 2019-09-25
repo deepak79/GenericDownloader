@@ -6,6 +6,7 @@ import androidx.annotation.NonNull
 import androidx.annotation.Nullable
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.mv.genericdownloader.BR
 import com.mv.genericdownloader.R
@@ -14,11 +15,20 @@ import com.mv.genericdownloader.databinding.FragmentPinwallBinding
 import com.mv.genericdownloader.ui.base.BaseFragment
 import com.mv.genericdownloader.ui.main.fragment.pinwall.adapter.MenuImagesAdapter
 import com.mv.genericdownloader.utils.GridItemDecoration
+import com.mv.genericdownloader.utils.PaginationListener
+import com.mv.genericdownloader.utils.PaginationListener.Companion.PAGE_START
 import javax.inject.Inject
 
 
 class PinWallFragment : BaseFragment<FragmentPinwallBinding,
         PinWallVM>(), PinWallNavigator {
+
+    private var currentPage = PAGE_START
+    private val isTheLastPage = false
+    private val totalPage = 10
+    private var isDataLoading = false
+    var itemCount = 0
+
     companion object {
         val TAG = PinWallFragment::class.java.simpleName
         fun newInstance(): PinWallFragment {
@@ -43,6 +53,22 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
         super.onViewCreated(view, savedInstanceState)
         binding = viewDataBinding
         binding!!.executePendingBindings()
+        binding!!.rvImagesWall.setHasFixedSize(true)
+        val layoutManager = LinearLayoutManager(context,LinearLayoutManager.VERTICAL,false)
+        binding!!.rvImagesWall.layoutManager = layoutManager
+        binding!!.rvImagesWall.addItemDecoration(GridItemDecoration(10, 2))
+        binding!!.rvImagesWall.addOnScrollListener(object : PaginationListener(layoutManager) {
+            override val isLastPage: Boolean
+                get() = isTheLastPage
+            override val isLoading: Boolean
+                get() = isDataLoading
+
+            override fun loadMoreItems() {
+                isDataLoading = true
+                currentPage++
+                requestGetData()
+            }
+        })
         observeDataResponse()
         requestGetData()
     }
@@ -74,9 +100,6 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
                 context!!,
                 it
             )
-            binding!!.rvImagesWall.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-            binding!!.rvImagesWall.addItemDecoration(GridItemDecoration(10, 2))
             binding!!.rvImagesWall.adapter = adapter
         })
     }
