@@ -1,10 +1,14 @@
 package com.mv.genericdownloaderlib.core
 
+import android.util.Log
 import com.mv.genericdownloaderlib.cache.LRUCache
 import com.mv.genericdownloaderlib.enums.ResourceTypes
 import com.mv.genericdownloaderlib.interfaces.IHandleRequestCallBack
 import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
-import com.mv.genericdownloaderlib.model.*
+import com.mv.genericdownloaderlib.model.BaseResource
+import com.mv.genericdownloaderlib.model.ImageResource
+import com.mv.genericdownloaderlib.model.JSONResource
+import com.mv.genericdownloaderlib.model.StringResource
 import com.mv.genericdownloaderlib.utils.LibConstants.Companion.DEFAULT_CACHE_SIZE
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -13,9 +17,11 @@ import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.simple.parser.JSONParser
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.InputStreamReader
 import java.math.BigInteger
 import java.security.MessageDigest
 
@@ -26,7 +32,9 @@ class GenericDownloadManager(
     private val mIResourceRequestCallBack: IResourceRequestCallBack<BaseResource>
 ) : IHandleRequestCallBack {
     private lateinit var disposable: Disposable
+
     companion object {
+        private val jsonParser = JSONParser()
         private val client = OkHttpClient()
         private val mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
         @Throws(IOException::class)
@@ -61,12 +69,12 @@ class GenericDownloadManager(
         getData()
     }
 
-    private fun getObserver(): DisposableObserver<ByteArray> {
-        return object : DisposableObserver<ByteArray>() {
+    private fun getObserver(): DisposableObserver<Any> {
+        return object : DisposableObserver<Any>() {
             override fun onComplete() {
             }
 
-            override fun onNext(inpStream: ByteArray) {
+            override fun onNext(inpStream: Any) {
                 if (!mLruCache.contains(getMD5EncryptedString(mResourceURL))) {
                     mLruCache.set(getMD5EncryptedString(mResourceURL), inpStream)
                 }
@@ -106,7 +114,7 @@ class GenericDownloadManager(
             .subscribeWith(getObserver())
     }
 
-    private fun fetchCachedData(mURL: String): Observable<ByteArray> {
+    private fun fetchCachedData(mURL: String): Observable<Any> {
         return Observable.create { emitter ->
             if (mLruCache.contains(getMD5EncryptedString(mURL))) {
                 emitter.onNext(mLruCache.get(getMD5EncryptedString(mURL)) as ByteArray)
@@ -115,14 +123,26 @@ class GenericDownloadManager(
         }
     }
 
-    private fun fetchRemoteData(mURL: String): Observable<ByteArray> {
+    private fun fetchRemoteData(mURL: String): Observable<Any> {
         return Observable.create { emitter ->
             val request = Request.Builder()
                 .url(mURL)
                 .build()
             val response = client.newCall(request).execute()
             try {
-                emitter.onNext(readAllBytes(response.body?.byteStream()!!))
+                when (mResourceTypes) {
+                    ResourceTypes.IMAGE -> {
+                        emitter.onNext(readAllBytes(response.body?.byteStream()!!))
+                    }
+                    ResourceTypes.JSON -> {
+                        val res = jsonParser.parse(
+                            InputStreamReader(response.body?.byteStream()!!, "UTF-8")
+                        )
+                        Log.e("@@@@@@@@@@@@@@@@",""+res)
+                        emitter.onNext(res)
+                    }
+                    else -> emitter.onError(java.lang.Exception("Invalid resource type!"))
+                }
             } catch (e: java.lang.Exception) {
                 emitter.onError(e)
             } finally {
