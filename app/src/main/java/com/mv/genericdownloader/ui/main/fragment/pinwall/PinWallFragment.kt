@@ -7,27 +7,33 @@ import androidx.annotation.Nullable
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.mv.genericdownloader.BR
 import com.mv.genericdownloader.R
 import com.mv.genericdownloader.ViewModelProviderFactory
 import com.mv.genericdownloader.databinding.FragmentPinwallBinding
+import com.mv.genericdownloader.model.response.DataResponse
 import com.mv.genericdownloader.ui.base.BaseFragment
 import com.mv.genericdownloader.ui.main.fragment.pinwall.adapter.MenuImagesAdapter
 import com.mv.genericdownloader.utils.GridItemDecoration
 import com.mv.genericdownloader.utils.PaginationListener
 import com.mv.genericdownloader.utils.PaginationListener.Companion.PAGE_START
+import kotlinx.android.synthetic.main.fragment_pinwall.*
 import javax.inject.Inject
 
 
 class PinWallFragment : BaseFragment<FragmentPinwallBinding,
-        PinWallVM>(), PinWallNavigator {
+        PinWallVM>(),
+    PinWallNavigator,
+    SwipeRefreshLayout.OnRefreshListener {
 
     private var currentPage = PAGE_START
     private val isTheLastPage = false
     private val totalPage = 10
     private var isDataLoading = false
     var itemCount = 0
+    private var isLastPage = false
+    private var isLoading = false
 
     companion object {
         val TAG = PinWallFragment::class.java.simpleName
@@ -53,8 +59,11 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
         super.onViewCreated(view, savedInstanceState)
         binding = viewDataBinding
         binding!!.executePendingBindings()
+        swipeRefresh.setOnRefreshListener(this)
+        adapter = MenuImagesAdapter(mutableListOf<DataResponse>())
+        binding!!.rvImagesWall.adapter = adapter
         binding!!.rvImagesWall.setHasFixedSize(true)
-        val layoutManager = LinearLayoutManager(context,LinearLayoutManager.VERTICAL,false)
+        val layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         binding!!.rvImagesWall.layoutManager = layoutManager
         binding!!.rvImagesWall.addItemDecoration(GridItemDecoration(10, 2))
         binding!!.rvImagesWall.addOnScrollListener(object : PaginationListener(layoutManager) {
@@ -96,11 +105,26 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
 
     private fun observeDataResponse() {
         viewModel.getDataResponseLiveData().observe(this, Observer {
-            adapter = MenuImagesAdapter(
-                context!!,
-                it
-            )
-            binding!!.rvImagesWall.adapter = adapter
+            if (currentPage != PAGE_START) {
+                adapter.removeLoading()
+            }
+            adapter.addItems(it)
+            swipeRefresh.isRefreshing = false
+            // check weather is last page or not
+            if (currentPage < totalPage) {
+                adapter.addLoading()
+            } else {
+                isLastPage = true
+            }
+            isLoading = false
         })
+    }
+
+    override fun onRefresh() {
+        itemCount = 0
+        currentPage = PAGE_START
+        isLastPage = false
+        adapter.clear()
+        requestGetData()
     }
 }

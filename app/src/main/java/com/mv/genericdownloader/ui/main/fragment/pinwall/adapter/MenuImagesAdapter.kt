@@ -1,11 +1,11 @@
 package com.mv.genericdownloader.ui.main.fragment.pinwall.adapter
 
-import android.content.Context
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.core.widget.ContentLoadingProgressBar
 import androidx.recyclerview.widget.RecyclerView
 import com.mv.genericdownloader.R
 import com.mv.genericdownloader.model.response.DataResponse
@@ -16,16 +16,40 @@ import com.mv.genericdownloaderlib.model.BaseResource
 import com.mv.genericdownloaderlib.model.ImageResource
 
 
-class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
+class MenuImagesAdapter(var mList: MutableList<DataResponse>) :
     RecyclerView.Adapter<BaseViewHolder>() {
     var selectedPosition = 0
     private val VIEW_TYPE_LOADING = 0
     private val VIEW_TYPE_NORMAL = 1
-    private val isLoaderVisible = false
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuImageVH {
-        val view = LayoutInflater.from(mContext).inflate(R.layout.row_images, parent, false)
-        return MenuImageVH(view)
-
+    private var isLoaderVisible = false
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+        when (viewType) {
+            VIEW_TYPE_LOADING -> {
+                return ProgressVH(
+                    LayoutInflater.from(parent.context).inflate(
+                        R.layout.row_loading,
+                        parent,
+                        false
+                    )
+                )
+            }
+            VIEW_TYPE_NORMAL -> {
+                return MenuImageVH(
+                    LayoutInflater.from(parent.context).inflate(
+                        R.layout.row_images,
+                        parent,
+                        false
+                    )
+                )
+            }
+            else -> return ProgressVH(
+                LayoutInflater.from(parent.context).inflate(
+                    R.layout.row_loading,
+                    parent,
+                    false
+                )
+            )
+        }
     }
 
     override fun getItemCount(): Int {
@@ -36,8 +60,47 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
-        //https://androidwave.com/pagination-in-recyclerview/
-        holder.onBind(position)
+        holder.onbind(position)
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (isLoaderVisible) {
+            if (position == mList.size - 1) VIEW_TYPE_LOADING else VIEW_TYPE_NORMAL
+        } else {
+            VIEW_TYPE_NORMAL
+        }
+    }
+
+    fun addLoading() {
+        isLoaderVisible = true
+        val dataResponse = DataResponse()
+        dataResponse.user.profileImage.large =
+            "https://images.unsplash.com/profile-fb-1464533812-a91a557e646d.jpg?ixlib=rb-0.3.5\\u0026q=80\\u0026fm=jpg\\u0026crop=faces\\u0026fit=crop\\u0026h=128\\u0026w=128\\u0026s=512955d67915413e3a20fb8fdbfcdc76"
+        mList.add(dataResponse)
+        notifyItemInserted(mList.size - 1)
+    }
+
+    fun clear() {
+        mList.clear()
+        notifyDataSetChanged()
+    }
+
+    fun removeLoading() {
+        isLoaderVisible = false
+        val position = mList.size - 1
+        val item = getItem(position)
+        mList.removeAt(position)
+        notifyItemRemoved(position)
+    }
+
+    fun getItem(position: Int): DataResponse {
+        return mList[position]
+    }
+
+
+    fun addItems(postItems: MutableList<DataResponse>) {
+        mList.addAll(postItems)
+        notifyDataSetChanged()
     }
 
     inner class MenuImageVH(itemView: View) : BaseViewHolder(itemView) {
@@ -58,7 +121,8 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
             notifyDataSetChanged()
         }
 
-        fun bind(position: Int) {
+        override fun onbind(position: Int) {
+            super.onbind(position)
             GenericDownloadManager(
                 mList[position].user.profileImage.large,
                 ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
@@ -71,30 +135,17 @@ class MenuImagesAdapter(var mContext: Context, var mList: List<DataResponse>) :
                     }
                 })
         }
+
     }
 
     inner class ProgressVH(itemView: View) : BaseViewHolder(itemView) {
-        var img: ImageView
+        var progress_bar: ContentLoadingProgressBar
         override fun clear() {
 
         }
 
         init {
-            img = itemView.findViewById(R.id.img)
-        }
-
-        fun bind(position: Int) {
-            GenericDownloadManager(
-                mList[position].user.profileImage.large,
-                ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
-                    override fun onSuccess(data: BaseResource) {
-                        img.setImageBitmap((data as ImageResource).getBitmap())
-                    }
-
-                    override fun onFailure(error: String?) {
-                        Log.e("@@@@", "Failure $error")
-                    }
-                })
+            progress_bar = itemView.findViewById(R.id.progress_bar)
         }
     }
 }

@@ -58,6 +58,7 @@ abstract class BaseActivity<T : ViewDataBinding, V : BaseViewModel<*>> : AppComp
         performDependencyInjection()
         super.onCreate(savedInstanceState)
         performDataBinding()
+        askPermission()
     }
 
     fun askPermission() {

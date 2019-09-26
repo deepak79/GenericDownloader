@@ -9,6 +9,7 @@ import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
 import com.mv.genericdownloaderlib.model.BaseResource
 import com.mv.genericdownloaderlib.model.ImageResource
 import com.mv.genericdownloaderlib.model.JSONResource
+import com.mv.genericdownloaderlib.model.StringResource
 import okhttp3.internal.lockAndWaitNanos
 import org.json.JSONObject
 import org.junit.Assert.*
@@ -91,13 +92,78 @@ class ExampleInstrumentedTest {
 
     @Test
     fun download_JSONResource_test_should_pass() {
-        val url = "https://pastebin.com/Z60FvjbX"
-        val expected = JSONObject("{\"squadName\":\"Super hero squad\",\"homeTown\":\"Metro City\",\"formed\":2016,\"secretBase\":\"Super tower\",\"active\":true}")
+        val url = "https://pastebin.com/raw/Z60FvjbX"
+        val expected =
+            JSONObject("{\"squadName\":\"Super hero squad\",\"homeTown\":\"Metro City\",\"formed\":2016,\"secretBase\":\"Super tower\",\"active\":true}")
         var res: JSONObject? = null
         GenericDownloadManager(url,
             ResourceTypes.JSON, object : IResourceRequestCallBack<BaseResource> {
                 override fun onSuccess(data: BaseResource) {
                     res = (data as JSONResource).getAsJSONObject()
+                }
+
+                override fun onFailure(error: String?) {
+                    fail("Failed with error $error")
+                }
+            })
+        //wait for network response
+        lockAndWaitNanos(2000000000)
+        assertNotNull(res)
+        assertEquals(expected.toString(), res.toString())
+    }
+
+    @Test
+    fun download_JSONResource_test_should_fail() {
+        val url = "https://pastebin.com/raw/GA2sKWiA"
+        val expected =
+            JSONObject("{\"squadName\":\"Super hero squad\",\"homeTown\":\"Metro City\",\"formed\":2016,\"secretBase\":\"Super tower\",\"active\":true}")
+        var res: JSONObject? = null
+        GenericDownloadManager(url,
+            ResourceTypes.JSON, object : IResourceRequestCallBack<BaseResource> {
+                override fun onSuccess(data: BaseResource) {
+                    res = (data as JSONResource).getAsJSONObject()
+                }
+
+                override fun onFailure(error: String?) {
+                    fail("Failed with error $error")
+                }
+            })
+        //wait for network response at least 2 seconds
+        lockAndWaitNanos(2000000000)
+        assertNotNull(res)
+        assertEquals(expected.toString(), res.toString())
+    }
+
+    @Test
+    fun download_StringResource_test_should_pass() {
+        val url = "https://pastebin.com/raw/rSFZHeaS"
+        val expected = "This is sample string to test generic downloader library"
+        var res: String? = null
+        GenericDownloadManager(url,
+            ResourceTypes.STRING, object : IResourceRequestCallBack<BaseResource> {
+                override fun onSuccess(data: BaseResource) {
+                    res = (data as StringResource).getString()
+                }
+
+                override fun onFailure(error: String?) {
+                    fail("Failed with error $error")
+                }
+            })
+        //wait for network response
+        lockAndWaitNanos(2000000000)
+        assertNotNull(res)
+        assertEquals(expected, res)
+    }
+
+    @Test
+    fun download_StringResource_test_should_fail() {
+        val url = "https://pastebin.com/raw/VdKQK7k9"
+        val expected = "This is sample string to test generic downloader library"
+        var res: String? = null
+        GenericDownloadManager(url,
+            ResourceTypes.STRING, object : IResourceRequestCallBack<BaseResource> {
+                override fun onSuccess(data: BaseResource) {
+                    res = (data as StringResource).getString()
                 }
 
                 override fun onFailure(error: String?) {

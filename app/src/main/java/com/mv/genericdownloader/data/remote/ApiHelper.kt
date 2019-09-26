@@ -4,6 +4,6 @@ import com.mv.genericdownloader.model.response.DataResponse
 import io.reactivex.Single
 
 interface ApiHelper {
-    fun getData(): Single<List<DataResponse>>
+    fun getData(): Single<MutableList<DataResponse>>
 }
 

@@ -14,7 +14,7 @@ class AppApiHelper @Inject
 constructor(
 ) : ApiHelper {
 
-    override fun getData(): Single<List<DataResponse>> {
+    override fun getData(): Single<MutableList<DataResponse>> {
         return Rx2AndroidNetworking.get(ApiEndPoint.ENDPOINT_GET_DATA_)
             .setPriority(Priority.HIGH)
             .build()

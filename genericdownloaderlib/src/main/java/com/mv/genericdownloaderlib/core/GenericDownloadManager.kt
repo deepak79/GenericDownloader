@@ -17,7 +17,6 @@ import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.json.simple.parser.JSONParser
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -34,7 +33,6 @@ class GenericDownloadManager(
     private lateinit var disposable: Disposable
 
     companion object {
-        private val jsonParser = JSONParser()
         private val client = OkHttpClient()
         private val mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
         @Throws(IOException::class)
@@ -134,14 +132,14 @@ class GenericDownloadManager(
                     ResourceTypes.IMAGE -> {
                         emitter.onNext(readAllBytes(response.body?.byteStream()!!))
                     }
+                    ResourceTypes.STRING,
                     ResourceTypes.JSON -> {
-                        val res = jsonParser.parse(
-                            InputStreamReader(response.body?.byteStream()!!, "UTF-8")
-                        )
-                        Log.e("@@@@@@@@@@@@@@@@",""+res)
-                        emitter.onNext(res)
+                        try {
+                            emitter.onNext(response.body?.string()!!)
+                        } catch (e: Exception) {
+                            emitter.onError(java.lang.Exception(e))
+                        }
                     }
-                    else -> emitter.onError(java.lang.Exception("Invalid resource type!"))
                 }
             } catch (e: java.lang.Exception) {
                 emitter.onError(e)

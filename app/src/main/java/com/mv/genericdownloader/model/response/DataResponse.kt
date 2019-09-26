@@ -47,7 +47,7 @@ data class DataResponse(
             @SerializedName("medium")
             val medium: String = "",
             @SerializedName("large")
-            val large: String = ""
+            var large: String = ""
         )
 
         data class Links(

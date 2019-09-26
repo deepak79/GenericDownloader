@@ -18,5 +18,4 @@ class ExampleInstrumentedTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("com.mv.genericdownloaderlib.test", appContext.packageName)
     }
-
 }
