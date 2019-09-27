@@ -17,7 +17,6 @@ import com.mv.genericdownloader.utils.FragmentInflater
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
-import kotlinx.android.synthetic.main.activity_main.*
 import javax.inject.Inject
 
 
@@ -43,15 +42,11 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(),
         super.onCreate(savedInstanceState)
         binding = viewDataBinding
         viewModel.setNavigator(this)
-        setSupportActionBar(toolbar)
-        setListeners()
+        setSupportActionBar(binding!!.toolbar)
         FragmentInflater.instance.inflate(
             PinWallFragment.newInstance(),
             this, R.id.container, PinWallFragment.TAG
         )
-    }
-
-    private fun setListeners() {
     }
 
     override fun onHandleError(error: String?) {
@@ -73,12 +68,12 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
+        return when (item.itemId) {
             R.id.menu_clear_cache -> {
                 (getCurrentFragment() as PinWallFragment).clearCache()
-                return true
+                true
             }
-            else -> return super.onOptionsItemSelected(item)
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

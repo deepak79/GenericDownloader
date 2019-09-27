@@ -1,5 +1,7 @@
 package com.mv.genericdownloaderlib.model
 
-abstract class BaseResource{
-
-}
+/**
+ * BaseResource abstract class to implement common changes to resources
+ *
+ * */
+abstract class BaseResource

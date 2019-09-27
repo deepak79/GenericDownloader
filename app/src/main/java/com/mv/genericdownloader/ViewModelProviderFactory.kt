@@ -3,6 +3,7 @@ package com.mv.genericdownloader
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.mv.genericdownloader.data.DataManager
+import com.mv.genericdownloader.ui.detail.DetailViewModel
 import com.mv.genericdownloader.ui.main.MainViewModel
 import com.mv.genericdownloader.ui.main.fragment.pinwall.PinWallVM
 import com.mv.genericdownloader.utils.rx.SchedulerProvider
@@ -23,6 +24,10 @@ constructor(
                 schedulerProvider
             ) as T
             modelClass.isAssignableFrom(PinWallVM::class.java) -> PinWallVM(
+                dataManager,
+                schedulerProvider
+            ) as T
+            modelClass.isAssignableFrom(DetailViewModel::class.java) -> DetailViewModel(
                 dataManager,
                 schedulerProvider
             ) as T

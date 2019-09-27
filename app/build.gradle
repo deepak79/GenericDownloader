@@ -2,8 +2,6 @@ apply plugin: 'com.android.application'
 
 apply plugin: 'kotlin-android'
 
-apply plugin: 'kotlin-android-extensions'
-
 apply plugin: 'kotlin-kapt'
 
 android {
@@ -35,9 +33,6 @@ android {
     dataBinding {
         enabled = true
     }
-    androidExtensions {
-        experimental = true
-    }
 }
 
 dependencies {
@@ -48,26 +43,40 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 
+    /***
+     * Recyclerview
+     */
     implementation "androidx.recyclerview:recyclerview:$rootProject.recyclerViewVersion"
 
-    // reactive
+    /***
+     * Rxjava the real magic
+     */
     implementation "io.reactivex.rxjava2:rxjava:$rootProject.rxjava2Version"
     implementation "io.reactivex.rxjava2:rxandroid:$rootProject.rxandroidVersion"
 
-    // dependency injection
+    /***
+     * Dependency injection Dagger
+     */
     implementation "com.google.dagger:dagger:$rootProject.dagger2Version"
     kapt "com.google.dagger:dagger-compiler:$rootProject.dagger2Version"
     kapt "com.google.dagger:dagger-android-processor:$rootProject.dagger2Version"
     implementation "com.google.dagger:dagger-android-support:$rootProject.dagger2Version"
-    // view model
+
+    /***
+     * Lifecycle componenets
+     */
     implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-runtime:$rootProject.lifecycleVersion"
     kapt "androidx.lifecycle:lifecycle-compiler:$rootProject.lifecycleVersion"
 
-    // network
+    /***
+     * Networking library
+     */
     implementation "com.amitshekhar.android:rx2-android-networking:$rootProject.rx2FastAndroidNetworking"
 
-    //Runtime Permission
+    /***
+     * For runtime permissions
+     */
     implementation "com.karumi:dexter:$rootProject.permissions"
 
     testImplementation 'junit:junit:4.12'

@@ -1,5 +1,6 @@
 package com.mv.genericdownloader.ui.main.fragment.pinwall.adapter
 
+import android.content.Intent
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,7 @@ import androidx.core.widget.ContentLoadingProgressBar
 import androidx.recyclerview.widget.RecyclerView
 import com.mv.genericdownloader.R
 import com.mv.genericdownloader.model.response.DataResponse
+import com.mv.genericdownloader.ui.detail.DetailActivity
 import com.mv.genericdownloaderlib.core.GenericDownloadManager
 import com.mv.genericdownloaderlib.enums.ResourceTypes
 import com.mv.genericdownloaderlib.interfaces.IResourceRequestCallBack
@@ -29,7 +31,7 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         when (viewType) {
             VIEW_TYPE_LOADING -> {
-                val view =   LayoutInflater.from(parent.context).inflate(
+                val view = LayoutInflater.from(parent.context).inflate(
                     R.layout.row_loading,
                     parent,
                     false
@@ -79,7 +81,6 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
         notifyDataSetChanged()
     }
 
-
     /**
      * ViewHolder for PinWalll
      * */
@@ -104,6 +105,9 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
 
         private fun setOnItemClick(adapterPosition: Int) {
             selectedPosition = adapterPosition
+            val intent = Intent(itemView.context!!, DetailActivity::class.java)
+            intent.putExtra("URL", mList[adapterPosition].user.profileImage.large)
+            itemView.context.startActivity(intent)
             notifyDataSetChanged()
         }
 

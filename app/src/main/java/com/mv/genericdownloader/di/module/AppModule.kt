@@ -22,7 +22,6 @@ class AppModule {
         return appApiHelper
     }
 
-
     @Provides
     @Singleton
     fun provideContext(application: Application): Context {

@@ -22,22 +22,42 @@ import java.io.InputStream
 import java.math.BigInteger
 import java.security.MessageDigest
 
-
+/**
+ * Core class GenericDownloadManager to download different type of resources from internet
+ * @param mResourceURL an URL to request resource to be downloaded
+ * @param mResourceTypes type of resource user is requesting
+ * @param mIResourceRequestCallBack interface for resource request callback
+ * */
 class GenericDownloadManager(
     private val mResourceURL: String,
     private val mResourceTypes: ResourceTypes,
     private val mIResourceRequestCallBack: IResourceRequestCallBack<BaseResource>
 ) : IHandleRequestCallBack {
+    /**
+     * disposable to add observable to support cancel request feature
+     */
     private lateinit var disposable: Disposable
 
     companion object {
+        /**
+         * instance of OkHttpClient to handle network request
+         */
         private val client = OkHttpClient()
+        /**
+         * instance of LruCache to handle caching mechanism
+         */
         private val mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
 
+        /**
+         * To clear the cached items
+         */
         fun clearCache() {
             mLruCache.clear()
         }
 
+        /**
+         * To convert inputstreamt to byte array
+         */
         @Throws(IOException::class)
         fun readAllBytes(ins: InputStream): ByteArray {
             val bufLen = 4 * 0x400 // 4KB
@@ -54,6 +74,9 @@ class GenericDownloadManager(
             }
         }
 
+        /**
+         * To get md5 of string to avoid reloading same resource
+         */
         @Throws(Exception::class)
         fun getMD5EncryptedString(encTarget: String): String {
             val mdEnc: MessageDigest? = MessageDigest.getInstance("MD5")
@@ -70,6 +93,9 @@ class GenericDownloadManager(
         getData()
     }
 
+    /**
+     * Observer to observe data returned by Network call or cache
+     */
     private fun getObserver(): DisposableObserver<Any> {
         return object : DisposableObserver<Any>() {
             override fun onComplete() {
@@ -104,6 +130,9 @@ class GenericDownloadManager(
         }
     }
 
+    /**
+     * To get data either from cache or network call
+     */
     private fun getData() {
         val cache = fetchCachedData(mResourceURL)
         val remote = fetchRemoteData(mResourceURL)
@@ -115,6 +144,11 @@ class GenericDownloadManager(
             .subscribeWith(getObserver())
     }
 
+    /**
+     * @param mURL URL of requested resource
+     *
+     * @return data return from cache
+     * */
     private fun fetchCachedData(mURL: String): Observable<Any> {
         return Observable.create { emitter ->
             if (mLruCache.contains(getMD5EncryptedString(mURL))) {
@@ -123,7 +157,11 @@ class GenericDownloadManager(
             emitter.onComplete()
         }
     }
-
+    /**
+     * @param mURL URL of requested resource
+     *
+     * @return data return from network call
+     * */
     private fun fetchRemoteData(mURL: String): Observable<Any> {
         return Observable.create { emitter ->
             val request = Request.Builder()
@@ -152,13 +190,18 @@ class GenericDownloadManager(
             }
         }
     }
-
+    /**
+     * To cancel the ongoing request to download resource
+     * */
     override fun onCancel() {
         if (!disposable.isDisposed) {
             disposable.dispose()
         }
     }
 
+    /**
+     * To retry the request
+     * */
     override fun onRetry() {
         getData()
     }

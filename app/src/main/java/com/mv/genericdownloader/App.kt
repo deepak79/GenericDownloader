@@ -2,8 +2,8 @@ package com.mv.genericdownloader
 
 import android.app.Activity
 import android.app.Application
-import com.mv.genericdownloader.di.component.DaggerAppComponent
 import com.androidnetworking.AndroidNetworking
+import com.mv.genericdownloader.di.component.DaggerAppComponent
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
 import javax.inject.Inject
@@ -20,7 +20,9 @@ class App : Application(), HasActivityInjector {
 
     override fun onCreate() {
         super.onCreate()
+        //Initialize networking library
         AndroidNetworking.initialize(applicationContext)
+        //Depedency injection
         DaggerAppComponent.builder()
             .application(this)
             .build()
