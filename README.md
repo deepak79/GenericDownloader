@@ -90,3 +90,28 @@ We can cancel the retry request with
 ```
  mGenericDownloadManager.onRetry()
 ```
+
+Unit tests are also included
+```
+@Test
+    fun download_JSONResource_test_should_pass() {
+        val url = "https://pastebin.com/raw/Z60FvjbX"
+        val expected =
+            JSONObject("{\"squadName\":\"Super hero squad\",\"homeTown\":\"Metro City\",\"formed\":2016,\"secretBase\":\"Super tower\",\"active\":true}")
+        var res: JSONObject? = null
+        GenericDownloadManager(url,
+            ResourceTypes.JSON, object : IResourceRequestCallBack<BaseResource> {
+                override fun onSuccess(data: BaseResource) {
+                    res = (data as JSONResource).getAsJSONObject()
+                }
+
+                override fun onFailure(error: String?) {
+                    fail("Failed with error $error")
+                }
+            })
+        //wait for network response
+        lockAndWaitNanos(2000000000)
+        assertNotNull(res)
+        assertEquals(expected.toString(), res.toString())
+    }
+```
