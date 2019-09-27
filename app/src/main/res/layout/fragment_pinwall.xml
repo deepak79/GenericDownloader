@@ -32,10 +32,34 @@
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rv_images_wall"
                     android:layout_width="match_parent"
+                    android:layoutAnimation="@anim/layout_animation"
+                    app:layout_behavior="@string/appbar_scrolling_view_behavior"
                     android:layout_height="match_parent"
                     android:layout_margin="4dp"
-                    android:overScrollMode="never" />
+                    android:overScrollMode="never"
+                    android:scrollbars="vertical" />
+
+                <TextView
+                    android:id="@+id/tv_messsage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/nointernet"
+                    android:textColor="@color/color_black"
+                    android:textSize="22sp"
+                    android:visibility="gone" />
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab_goto_top"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_margin="16dp"
+                android:contentDescription="@string/go_to_top"
+                android:src="@drawable/ic_go_to_top"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

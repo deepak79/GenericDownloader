@@ -2,38 +2,29 @@ package com.mv.genericdownloader.ui.main.fragment.pinwall
 
 import android.os.Bundle
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import androidx.annotation.NonNull
 import androidx.annotation.Nullable
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.mv.genericdownloader.BR
 import com.mv.genericdownloader.R
 import com.mv.genericdownloader.ViewModelProviderFactory
 import com.mv.genericdownloader.databinding.FragmentPinwallBinding
-import com.mv.genericdownloader.model.response.DataResponse
 import com.mv.genericdownloader.ui.base.BaseFragment
-import com.mv.genericdownloader.ui.main.fragment.pinwall.adapter.MenuImagesAdapter
-import com.mv.genericdownloader.utils.GridItemDecoration
+import com.mv.genericdownloader.ui.main.fragment.pinwall.adapter.PinWallAdapter
 import com.mv.genericdownloader.utils.PaginationListener
-import com.mv.genericdownloader.utils.PaginationListener.Companion.PAGE_START
+import com.mv.genericdownloaderlib.core.GenericDownloadManager
 import kotlinx.android.synthetic.main.fragment_pinwall.*
 import javax.inject.Inject
 
 
-class PinWallFragment : BaseFragment<FragmentPinwallBinding,
-        PinWallVM>(),
+class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
     PinWallNavigator,
     SwipeRefreshLayout.OnRefreshListener {
-
-    private var currentPage = PAGE_START
-    private val isTheLastPage = false
-    private val totalPage = 10
-    private var isDataLoading = false
-    var itemCount = 0
-    private var isLastPage = false
-    private var isLoading = false
 
     companion object {
         val TAG = PinWallFragment::class.java.simpleName
@@ -45,14 +36,25 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
         }
     }
 
+    private var isDataLoading = false
+    var itemCount = 0
     @Inject
     lateinit var factory: ViewModelProviderFactory
     var viewModels: PinWallVM? = null
     var binding: FragmentPinwallBinding? = null
-    lateinit var adapter: MenuImagesAdapter
+    lateinit var adapter: PinWallAdapter
     override fun onCreate(@Nullable savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModels!!.setNavigator(this)
+    }
+
+    fun clearCache() {
+        if (adapter != null) {
+            GenericDownloadManager.clearCache()
+            itemCount = 0
+            adapter.clear()
+            requestGetData()
+        }
     }
 
     override fun onViewCreated(@NonNull view: View, savedInstanceState: Bundle?) {
@@ -60,24 +62,40 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
         binding = viewDataBinding
         binding!!.executePendingBindings()
         swipeRefresh.setOnRefreshListener(this)
-        adapter = MenuImagesAdapter(mutableListOf<DataResponse>())
-        binding!!.rvImagesWall.adapter = adapter
+        adapter = PinWallAdapter(mutableListOf())
         binding!!.rvImagesWall.setHasFixedSize(true)
-        val layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        val layoutManager = GridLayoutManager(context, 2)
         binding!!.rvImagesWall.layoutManager = layoutManager
-        binding!!.rvImagesWall.addItemDecoration(GridItemDecoration(10, 2))
+        layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int {
+                if (adapter != null) {
+                    return when (adapter.getItemViewType(position)) {
+                        1 -> {
+                            1
+                        }
+                        0 -> {
+                            2
+                        }
+                        else -> -1
+                    }
+                } else {
+                    return -1
+                }
+            }
+        }
         binding!!.rvImagesWall.addOnScrollListener(object : PaginationListener(layoutManager) {
-            override val isLastPage: Boolean
-                get() = isTheLastPage
             override val isLoading: Boolean
                 get() = isDataLoading
 
             override fun loadMoreItems() {
-                isDataLoading = true
-                currentPage++
                 requestGetData()
             }
         })
+        binding!!.rvImagesWall.adapter = adapter
+        binding!!.fabGotoTop.setOnClickListener {
+            binding!!.fabGotoTop.visibility = GONE
+            binding!!.rvImagesWall.smoothScrollToPosition(0)
+        }
         observeDataResponse()
         requestGetData()
     }
@@ -100,30 +118,31 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding,
     }
 
     private fun requestGetData() {
-        viewModel.getData()
+        if (isNetworkConnected) {
+            binding!!.tvMesssage.visibility = GONE
+            binding!!.rvImagesWall.visibility = VISIBLE
+            adapter.addLoading()
+            isDataLoading = true
+            viewModel.getDataFromRemote()
+        } else {
+            binding!!.tvMesssage.visibility = VISIBLE
+            binding!!.rvImagesWall.visibility = GONE
+        }
     }
 
     private fun observeDataResponse() {
         viewModel.getDataResponseLiveData().observe(this, Observer {
-            if (currentPage != PAGE_START) {
-                adapter.removeLoading()
-            }
             adapter.addItems(it)
+            isDataLoading = false
             swipeRefresh.isRefreshing = false
-            // check weather is last page or not
-            if (currentPage < totalPage) {
-                adapter.addLoading()
-            } else {
-                isLastPage = true
+            if (adapter.mList.size > 10) {
+                binding!!.fabGotoTop.visibility = VISIBLE
             }
-            isLoading = false
         })
     }
 
     override fun onRefresh() {
         itemCount = 0
-        currentPage = PAGE_START
-        isLastPage = false
         adapter.clear()
         requestGetData()
     }

@@ -3,7 +3,10 @@ package com.mv.genericdownloader.ui.main.fragment.pinwall.adapter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.recyclerview.widget.RecyclerView
@@ -16,25 +19,25 @@ import com.mv.genericdownloaderlib.model.BaseResource
 import com.mv.genericdownloaderlib.model.ImageResource
 
 
-class MenuImagesAdapter(var mList: MutableList<DataResponse>) :
+class PinWallAdapter(var mList: MutableList<DataResponse>) :
     RecyclerView.Adapter<BaseViewHolder>() {
     var selectedPosition = 0
     private val VIEW_TYPE_LOADING = 0
     private val VIEW_TYPE_NORMAL = 1
     private var isLoaderVisible = false
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
         when (viewType) {
             VIEW_TYPE_LOADING -> {
-                return ProgressVH(
-                    LayoutInflater.from(parent.context).inflate(
-                        R.layout.row_loading,
-                        parent,
-                        false
-                    )
+                val view =   LayoutInflater.from(parent.context).inflate(
+                    R.layout.row_loading,
+                    parent,
+                    false
                 )
+                return ProgressVH(view)
             }
             VIEW_TYPE_NORMAL -> {
-                return MenuImageVH(
+                return PinWallVH(
                     LayoutInflater.from(parent.context).inflate(
                         R.layout.row_images,
                         parent,
@@ -71,40 +74,20 @@ class MenuImagesAdapter(var mList: MutableList<DataResponse>) :
         }
     }
 
-    fun addLoading() {
-        isLoaderVisible = true
-        val dataResponse = DataResponse()
-        dataResponse.user.profileImage.large =
-            "https://images.unsplash.com/profile-fb-1464533812-a91a557e646d.jpg?ixlib=rb-0.3.5\\u0026q=80\\u0026fm=jpg\\u0026crop=faces\\u0026fit=crop\\u0026h=128\\u0026w=128\\u0026s=512955d67915413e3a20fb8fdbfcdc76"
-        mList.add(dataResponse)
-        notifyItemInserted(mList.size - 1)
-    }
-
     fun clear() {
         mList.clear()
         notifyDataSetChanged()
     }
 
-    fun removeLoading() {
-        isLoaderVisible = false
-        val position = mList.size - 1
-        val item = getItem(position)
-        mList.removeAt(position)
-        notifyItemRemoved(position)
-    }
 
-    fun getItem(position: Int): DataResponse {
-        return mList[position]
-    }
-
-
-    fun addItems(postItems: MutableList<DataResponse>) {
-        mList.addAll(postItems)
-        notifyDataSetChanged()
-    }
-
-    inner class MenuImageVH(itemView: View) : BaseViewHolder(itemView) {
+    /**
+     * ViewHolder for PinWalll
+     * */
+    inner class PinWallVH(itemView: View) : BaseViewHolder(itemView) {
         var img: ImageView
+        var progress_bar: ContentLoadingProgressBar
+        var btn_cancel_request: Button
+        var btn_retry_request: Button
         override fun clear() {
 
         }
@@ -114,6 +97,9 @@ class MenuImagesAdapter(var mList: MutableList<DataResponse>) :
                 setOnItemClick(adapterPosition)
             }
             img = itemView.findViewById(R.id.img)
+            progress_bar = itemView.findViewById(R.id.progress_bar)
+            btn_cancel_request = itemView.findViewById(R.id.btn_cancel_request)
+            btn_retry_request = itemView.findViewById(R.id.btn_retry_request)
         }
 
         private fun setOnItemClick(adapterPosition: Int) {
@@ -123,22 +109,35 @@ class MenuImagesAdapter(var mList: MutableList<DataResponse>) :
 
         override fun onbind(position: Int) {
             super.onbind(position)
-            GenericDownloadManager(
+            val mGenericDownloadManager = GenericDownloadManager(
                 mList[position].user.profileImage.large,
                 ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
                     override fun onSuccess(data: BaseResource) {
+                        progress_bar.visibility = GONE
                         img.setImageBitmap((data as ImageResource).getBitmap())
                     }
 
                     override fun onFailure(error: String?) {
+                        progress_bar.visibility = GONE
                         Log.e("@@@@", "Failure $error")
                     }
                 })
+            btn_cancel_request.setOnClickListener {
+                progress_bar.visibility = GONE
+                mGenericDownloadManager.onCancel()
+            }
+            btn_retry_request.setOnClickListener {
+                progress_bar.visibility = VISIBLE
+                mGenericDownloadManager.onRetry()
+            }
         }
-
     }
 
+    /**
+     * ViewHolder for Progressbar
+     * */
     inner class ProgressVH(itemView: View) : BaseViewHolder(itemView) {
+
         var progress_bar: ContentLoadingProgressBar
         override fun clear() {
 
@@ -147,5 +146,24 @@ class MenuImagesAdapter(var mList: MutableList<DataResponse>) :
         init {
             progress_bar = itemView.findViewById(R.id.progress_bar)
         }
+    }
+
+    fun removeLoading() {
+        isLoaderVisible = false
+        val position = mList.size - 1
+        mList.removeAt(position)
+        notifyItemRemoved(position)
+    }
+
+    fun addLoading() {
+        isLoaderVisible = true
+        mList.add(DataResponse())
+        notifyItemInserted(mList.size - 1)
+    }
+
+    fun addItems(postItems: MutableList<DataResponse>) {
+        mList.addAll(postItems)
+        removeLoading()
+        notifyDataSetChanged()
     }
 }

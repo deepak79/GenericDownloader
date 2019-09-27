@@ -1,15 +1,13 @@
 package com.mv.genericdownloader.utils
 
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 abstract class PaginationListener
 /**
  * Supporting only LinearLayoutManager for now.
  */
-    (private val layoutManager: LinearLayoutManager) : RecyclerView.OnScrollListener() {
-
-    abstract val isLastPage: Boolean
+    (private val layoutManager: GridLayoutManager) : RecyclerView.OnScrollListener() {
 
     abstract val isLoading: Boolean
 
@@ -20,10 +18,9 @@ abstract class PaginationListener
         val totalItemCount = layoutManager.itemCount
         val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
 
-        if (!isLoading && !isLastPage) {
+        if (!isLoading) {
             if (visibleItemCount + firstVisibleItemPosition >= totalItemCount
                 && firstVisibleItemPosition >= 0
-                && totalItemCount >= PAGE_SIZE
             ) {
                 loadMoreItems()
             }
@@ -31,13 +28,4 @@ abstract class PaginationListener
     }
 
     protected abstract fun loadMoreItems()
-
-    companion object {
-
-        val PAGE_START = 1
-        /**
-         * Set scrolling threshold here (for now i'm assuming 10 item in one page)
-         */
-        private val PAGE_SIZE = 10
-    }
 }

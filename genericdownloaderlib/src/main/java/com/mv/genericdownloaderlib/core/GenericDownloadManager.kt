@@ -1,6 +1,5 @@
 package com.mv.genericdownloaderlib.core
 
-import android.util.Log
 import com.mv.genericdownloaderlib.cache.LRUCache
 import com.mv.genericdownloaderlib.enums.ResourceTypes
 import com.mv.genericdownloaderlib.interfaces.IHandleRequestCallBack
@@ -20,7 +19,6 @@ import okhttp3.Request
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.math.BigInteger
 import java.security.MessageDigest
 
@@ -35,6 +33,11 @@ class GenericDownloadManager(
     companion object {
         private val client = OkHttpClient()
         private val mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
+
+        fun clearCache() {
+            mLruCache.clear()
+        }
+
         @Throws(IOException::class)
         fun readAllBytes(ins: InputStream): ByteArray {
             val bufLen = 4 * 0x400 // 4KB

@@ -34,11 +34,13 @@ class LRUCache(private val minimalSize: Int = DEFAULT_SIZE) {
     }
 
     private fun cycleKeyMap() {
-        eldestKeyToRemove?.let { keyMap.remove(it) }
+        eldestKeyToRemove?.let {
+            keyMap.remove(it)
+        }
         eldestKeyToRemove = null
     }
 
     companion object {
-        private const val DEFAULT_SIZE = 30
+        private const val DEFAULT_SIZE = 50
     }
 }

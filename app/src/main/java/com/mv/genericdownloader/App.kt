@@ -20,11 +20,10 @@ class App : Application(), HasActivityInjector {
 
     override fun onCreate() {
         super.onCreate()
+        AndroidNetworking.initialize(applicationContext)
         DaggerAppComponent.builder()
             .application(this)
             .build()
             .inject(this)
-
-        AndroidNetworking.initialize(applicationContext)
     }
 }

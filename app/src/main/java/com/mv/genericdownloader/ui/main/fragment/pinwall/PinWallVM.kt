@@ -5,12 +5,19 @@ import com.mv.genericdownloader.data.DataManager
 import com.mv.genericdownloader.model.response.DataResponse
 import com.mv.genericdownloader.ui.base.BaseViewModel
 import com.mv.genericdownloader.utils.rx.SchedulerProvider
+import io.reactivex.Completable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import java.util.concurrent.TimeUnit
 
 
 class PinWallVM(dataManager: DataManager, schedulerProvider: SchedulerProvider) :
     BaseViewModel<PinWallNavigator>(dataManager, schedulerProvider) {
     private var mDataResponse: MutableLiveData<MutableList<DataResponse>> =
         MutableLiveData()
+    private var mData = mutableListOf<DataResponse>()
+    private var mCurrentIndex = 0
+    private val OFFSET = 6
+    private var mLastIndex = OFFSET
 
     private fun handleError(error: Throwable?) {
         setIsLoading(false)
@@ -21,19 +28,37 @@ class PinWallVM(dataManager: DataManager, schedulerProvider: SchedulerProvider) 
         return mDataResponse
     }
 
-    fun getData() {
+    fun getDataFromRemote() {
         setIsLoading(true)
-        compositeDisposable.add(
-            dataManager.getData()
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribe({ data ->
-                    setIsLoading(false)
-                    mDataResponse.postValue(data)
-                }, { throwable ->
-                    handleError(throwable)
-                    mDataResponse.postValue(null)
-                })
-        )
+        if (mData.size == 0) {
+            compositeDisposable.add(
+                dataManager.getData()
+                    .subscribeOn(schedulerProvider.io())
+                    .observeOn(schedulerProvider.ui())
+                    .subscribe({ data ->
+                        setIsLoading(false)
+                        mData = data
+                        mDataResponse.postValue(mData.subList(mCurrentIndex, mLastIndex))
+                    }, { throwable ->
+                        handleError(throwable)
+                        mDataResponse.postValue(null)
+                    })
+            )
+        } else {
+            setIsLoading(false)
+            //Mock pagination
+            mCurrentIndex = mLastIndex
+            mLastIndex += OFFSET
+            compositeDisposable.add(
+                Completable.timer(2, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
+                    .subscribe {
+                        if (mCurrentIndex < mData.size && mLastIndex < mData.size) {
+                            mDataResponse.postValue(mData.subList(mCurrentIndex, mLastIndex))
+                        } else {
+                            mDataResponse.postValue(mData.subList(mData.size - 7, mData.size - 1))
+                        }
+                    }
+            )
+        }
     }
 }
