@@ -3,8 +3,10 @@
 Simple library to download different types of resources from network. Currently we support ```String, JSON and Bitmap```.
 You can fork it and add different resources than this. Uses LruCache internally to avoid redownloading the same resource.
 
+You can download APK from : [Here](https://github.com/deepak79/GenericDownloader/blob/master/GenericDownloader.apk).
+
 The resources we support now is:
-```
+```kotlin
 ImageResource
 JSONResource
 StringResource
