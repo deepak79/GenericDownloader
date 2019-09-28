@@ -42,17 +42,35 @@ class GenericDownloadManager(
         /**
          * instance of OkHttpClient to handle network request
          */
-        private val client = OkHttpClient()
+        private lateinit var mOkHttpClient: OkHttpClient
         /**
          * instance of LruCache to handle caching mechanism
          */
-        private val mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
+        private lateinit var mLruCache: LRUCache
+
+        fun getHttpClient(): OkHttpClient {
+            if (!::mOkHttpClient.isInitialized) {
+                mOkHttpClient = OkHttpClient()
+            }
+            return mOkHttpClient
+        }
+
+        fun initialize(cacheSize: Int) {
+            mLruCache = LRUCache(cacheSize)
+        }
+
+        fun getLruCacheInstance(): LRUCache {
+            if (!::mLruCache.isInitialized) {
+                mLruCache = LRUCache(DEFAULT_CACHE_SIZE)
+            }
+            return mLruCache
+        }
 
         /**
          * To clear the cached items
          */
         fun clearCache() {
-            mLruCache.clear()
+            getLruCacheInstance().clear()
         }
 
         /**
@@ -102,8 +120,8 @@ class GenericDownloadManager(
             }
 
             override fun onNext(inpStream: Any) {
-                if (!mLruCache.contains(getMD5EncryptedString(mResourceURL))) {
-                    mLruCache.set(getMD5EncryptedString(mResourceURL), inpStream)
+                if (!getLruCacheInstance().contains(getMD5EncryptedString(mResourceURL))) {
+                    getLruCacheInstance().set(getMD5EncryptedString(mResourceURL), inpStream)
                 }
                 when (mResourceTypes) {
                     ResourceTypes.IMAGE -> mIResourceRequestCallBack.onSuccess(
@@ -151,12 +169,13 @@ class GenericDownloadManager(
      * */
     private fun fetchCachedData(mURL: String): Observable<Any> {
         return Observable.create { emitter ->
-            if (mLruCache.contains(getMD5EncryptedString(mURL))) {
-                emitter.onNext(mLruCache.get(getMD5EncryptedString(mURL)) as ByteArray)
+            if (getLruCacheInstance().contains(getMD5EncryptedString(mURL))) {
+                emitter.onNext(getLruCacheInstance().get(getMD5EncryptedString(mURL)) as ByteArray)
             }
             emitter.onComplete()
         }
     }
+
     /**
      * @param mURL URL of requested resource
      *
@@ -167,11 +186,15 @@ class GenericDownloadManager(
             val request = Request.Builder()
                 .url(mURL)
                 .build()
-            val response = client.newCall(request).execute()
+            val response = getHttpClient().newCall(request).execute()
             try {
                 when (mResourceTypes) {
                     ResourceTypes.IMAGE -> {
-                        emitter.onNext(readAllBytes(response.body?.byteStream()!!))
+                        try {
+                            emitter.onNext(readAllBytes(response.body?.byteStream()!!))
+                        } catch (e: Exception) {
+                            emitter.onError(java.lang.Exception(e))
+                        }
                     }
                     ResourceTypes.STRING,
                     ResourceTypes.JSON -> {
@@ -190,6 +213,7 @@ class GenericDownloadManager(
             }
         }
     }
+
     /**
      * To cancel the ongoing request to download resource
      * */

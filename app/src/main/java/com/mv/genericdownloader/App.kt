@@ -4,6 +4,8 @@ import android.app.Activity
 import android.app.Application
 import com.androidnetworking.AndroidNetworking
 import com.mv.genericdownloader.di.component.DaggerAppComponent
+import com.mv.genericdownloader.utils.AppConstants.Companion.CACHE_SIZE
+import com.mv.genericdownloaderlib.core.GenericDownloadManager
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
 import javax.inject.Inject
@@ -22,6 +24,10 @@ class App : Application(), HasActivityInjector {
         super.onCreate()
         //Initialize networking library
         AndroidNetworking.initialize(applicationContext)
+
+        //Initialize Generic Download Manager
+        GenericDownloadManager.initialize(CACHE_SIZE)
+
         //Depedency injection
         DaggerAppComponent.builder()
             .application(this)

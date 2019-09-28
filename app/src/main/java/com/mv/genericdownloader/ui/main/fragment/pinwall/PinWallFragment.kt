@@ -43,6 +43,21 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
     var viewModels: PinWallVM? = null
     var binding: FragmentPinwallBinding? = null
     lateinit var mPinWallAdapter: PinWallAdapter
+
+    override val bindingVariable :Int
+        get() =  BR.viewModel
+    override val layoutId: Int
+        get() = R.layout.fragment_pinwall
+
+    override val viewModel: PinWallVM
+        get() = getPinWallVM()
+
+    fun getPinWallVM():PinWallVM{
+        viewModels = ViewModelProviders.of(this, factory).get(PinWallVM::class.java)
+        return viewModels!!
+    }
+
+
     override fun onCreate(@Nullable savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModels!!.setNavigator(this)
@@ -109,27 +124,6 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
         binding!!.rvImagesWall.adapter = mPinWallAdapter
     }
 
-    /**
-     * To get binding variable
-     * */
-    override fun getBindingVariable(): Int {
-        return BR.viewModel
-    }
-
-    /**
-     * To get the layout resource
-     * */
-    override fun getLayoutId(): Int {
-        return R.layout.fragment_pinwall
-    }
-
-    /**
-     * To get the viewModel
-     * */
-    override fun getViewModel(): PinWallVM {
-        viewModels = ViewModelProviders.of(this, factory).get(PinWallVM::class.java)
-        return viewModels!!
-    }
 
     /**
      * To show error to the user

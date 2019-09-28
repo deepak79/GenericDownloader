@@ -5,9 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.recyclerview.widget.RecyclerView
@@ -87,11 +85,6 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
     inner class PinWallVH(itemView: View) : BaseViewHolder(itemView) {
         var img: ImageView
         var progress_bar: ContentLoadingProgressBar
-        var btn_cancel_request: Button
-        var btn_retry_request: Button
-        override fun clear() {
-
-        }
 
         init {
             itemView.setOnClickListener {
@@ -99,8 +92,6 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
             }
             img = itemView.findViewById(R.id.img)
             progress_bar = itemView.findViewById(R.id.progress_bar)
-            btn_cancel_request = itemView.findViewById(R.id.btn_cancel_request)
-            btn_retry_request = itemView.findViewById(R.id.btn_retry_request)
         }
 
         private fun setOnItemClick(adapterPosition: Int) {
@@ -108,12 +99,11 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
             val intent = Intent(itemView.context!!, DetailActivity::class.java)
             intent.putExtra("URL", mList[adapterPosition].user.profileImage.large)
             itemView.context.startActivity(intent)
-            notifyDataSetChanged()
         }
 
         override fun onbind(position: Int) {
             super.onbind(position)
-            val mGenericDownloadManager = GenericDownloadManager(
+            GenericDownloadManager(
                 mList[position].user.profileImage.large,
                 ResourceTypes.IMAGE, object : IResourceRequestCallBack<BaseResource> {
                     override fun onSuccess(data: BaseResource) {
@@ -126,14 +116,6 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
                         Log.e("@@@@", "Failure $error")
                     }
                 })
-            btn_cancel_request.setOnClickListener {
-                progress_bar.visibility = GONE
-                mGenericDownloadManager.onCancel()
-            }
-            btn_retry_request.setOnClickListener {
-                progress_bar.visibility = VISIBLE
-                mGenericDownloadManager.onRetry()
-            }
         }
     }
 
@@ -143,9 +125,6 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
     inner class ProgressVH(itemView: View) : BaseViewHolder(itemView) {
 
         var progress_bar: ContentLoadingProgressBar
-        override fun clear() {
-
-        }
 
         init {
             progress_bar = itemView.findViewById(R.id.progress_bar)
@@ -161,7 +140,10 @@ class PinWallAdapter(var mList: MutableList<DataResponse>) :
 
     fun addLoading() {
         isLoaderVisible = true
-        mList.add(DataResponse())
+        mList.add(DataResponse().apply {
+            user.profileImage.large =
+                "https://images.unsplash.com/profile-1464495186405-68089dcd96c3?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=128&w=128&s=622a88097cf6661f84cd8942d851d9a2"
+        })
         notifyItemInserted(mList.size - 1)
     }
 
