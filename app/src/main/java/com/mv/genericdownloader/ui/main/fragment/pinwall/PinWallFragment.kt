@@ -17,15 +17,16 @@ import com.mv.genericdownloader.ViewModelProviderFactory
 import com.mv.genericdownloader.databinding.FragmentPinwallBinding
 import com.mv.genericdownloader.ui.base.BaseFragment
 import com.mv.genericdownloader.ui.main.fragment.pinwall.adapter.PinWallAdapter
+import com.mv.genericdownloader.utils.IOnBackPressed
 import com.mv.genericdownloader.utils.PaginationListener
 import com.mv.genericdownloaderlib.core.GenericDownloadManager
 import javax.inject.Inject
 
 
-@SuppressLint("RestrictedApi")
 class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
     PinWallNavigator,
-    SwipeRefreshLayout.OnRefreshListener {
+    SwipeRefreshLayout.OnRefreshListener,
+IOnBackPressed{
 
     companion object {
         val TAG = PinWallFragment::class.java.simpleName
@@ -80,7 +81,7 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
         binding!!.swipeRefresh.setOnRefreshListener(this)
         setRecyclerview()
         binding!!.fabGotoTop.setOnClickListener {
-            binding!!.fabGotoTop.visibility = GONE
+            binding!!.fabGotoTop.hide()
             binding!!.rvImagesWall.smoothScrollToPosition(0)
         }
         observeDataResponse()
@@ -113,7 +114,7 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
         mPinWallAdapter = PinWallAdapter(mutableListOf())
         binding!!.rvImagesWall.setHasFixedSize(true)
         binding!!.rvImagesWall.layoutManager = layoutManager
-        binding!!.rvImagesWall.addOnScrollListener(object : PaginationListener(layoutManager) {
+        binding!!.rvImagesWall.addOnScrollListener(object : PaginationListener(layoutManager,binding!!.fabGotoTop) {
             override val isLoading: Boolean
                 get() = isDataLoading
 
@@ -156,9 +157,6 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
             mPinWallAdapter.addItems(it)
             isDataLoading = false
             binding!!.swipeRefresh.isRefreshing = false
-            if (mPinWallAdapter.mList.size > 10) {
-                binding!!.fabGotoTop.visibility = VISIBLE
-            }
         })
     }
 
@@ -169,5 +167,9 @@ class PinWallFragment : BaseFragment<FragmentPinwallBinding, PinWallVM>(),
         mPinWallAdapter.clear()
         viewModel.reset()
         requestGetData()
+    }
+
+    override fun onBackPressed(): Boolean {
+        return true
     }
 }
